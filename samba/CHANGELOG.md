@@ -1,4 +1,10 @@
 # Changelog
+
+## 13.0.0
+
+- allow access to the shares by multiple users, configured in yaml
+- allow editing the list of shares available, and denying users access to each, configured in yaml
+
 ## 12.3.2
 
 - Suppress benign idmap logged error

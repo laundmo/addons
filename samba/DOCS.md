@@ -10,7 +10,7 @@ Follow these steps to get the add-on installed on your system:
 
 ## How to use
 
-1. In the configuration section, set a username and password.
+1. In the configuration section set a username and password in the `users` block.
    You can specify any username and password; these are not related in any way to the login credentials you use to log in to Home Assistant or to log in to the computer with which you will use Samba share.
 2. Save the configuration.
 3. Start the add-on.
@@ -18,19 +18,19 @@ Follow these steps to get the add-on installed on your system:
 
 ## Connection
 
-If you are on Windows you use `\\<IP_ADDRESS>\`, if you are on MacOS you use `smb://<IP_ADDRESS>` to connect to the shares.
+If you are on Windows you use `\\<IP_ADDRESS>\<share_name>`, if you are on MacOS you use `smb://<IP_ADDRESS>/<share_name>` to connect to the share.
 
-This addon exposes the following directories over smb (samba):
+This addon exposes the following directories over smb/cifs by default:
 
-Directory | Description
--- | --
-`addons` | This is for your local add-ons.
-`addon_configs` | This is for the configuration files of your add-ons.
-`backup` | This is for your backups.
-`config` | This is for your Home Assistant configuration.
-`media` | This is for local media files.
-`share` | This is for your data that is shared between add-ons and Home Assistant.
-`ssl` | This is for your SSL certificates.
+| Directory       | Description                                                              |
+| --------------- | ------------------------------------------------------------------------ |
+| `addons`        | This is for your local add-ons.                                          |
+| `addon_configs` | This is for the configuration files of your add-ons.                     |
+| `backup`        | This is for your backups.                                                |
+| `config`        | This is for your Home Assistant configuration.                           |
+| `media`         | This is for local media files.                                           |
+| `share`         | This is for your data that is shared between add-ons and Home Assistant. |
+| `ssl`           | This is for your SSL certificates.                                       |
 
 ## Configuration
 
@@ -38,8 +38,13 @@ Add-on configuration:
 
 ```yaml
 workgroup: WORKGROUP
-username: homeassistant
-password: YOUR_PASSWORD
+compatibility_mode: false
+veto_files:
+  - ._*
+  - .DS_Store
+  - Thumbs.db
+  - icon?
+  - .Trashes
 allow_hosts:
   - 10.0.0.0/8
   - 172.16.0.0/12
@@ -47,24 +52,36 @@ allow_hosts:
   - 169.254.0.0/16
   - fe80::/10
   - fc00::/7
-veto_files:
-  - "._*"
-  - ".DS_Store"
-  - Thumbs.db
-compatibility_mode: false
+users:
+  - username: homeassistant
+    password: null
+shares:
+  - share_name: config
+    path: /homeassistant
+    deny: []
+  - share_name: addons
+    path: /addons
+    deny: []
+  - share_name: addon_configs
+    path: /addon_configs
+    deny: []
+  - share_name: ssl
+    path: /ssl
+    deny: []
+  - share_name: share
+    path: /share
+    deny: []
+  - share_name: backup
+    path: /backup
+    deny: []
+  - share_name: media
+    path: /media
+    deny: []
 ```
 
 ### Option: `workgroup` (required)
 
 Change WORKGROUP to reflect your network needs.
-
-### Option: `username` (required)
-
-The username you would like to use to authenticate with the Samba server.
-
-### Option: `password` (required)
-
-The password that goes with the username configured for authentication.
 
 ### Option: `allow_hosts` (required)
 
@@ -84,6 +101,34 @@ handle the newer protocols, however, it lowers security. Only use this
 when you absolutely need it and understand the possible consequences.
 
 Defaults to `false`.
+
+### Option `users` (at least 1 required)
+
+A list of usernames and passwords for the users which have access to samba shares.
+
+#### `username` (required)
+
+A username you would like to use to authenticate with the Samba server.
+
+#### `password` (required)
+
+The password that goes with the username.
+
+### Option: `shares` (at least 1 required)
+
+A list of shared folders which samba will make accessible.
+
+#### `share_name` (required)
+
+The name of the samba shared folder, for use when connecting.
+
+#### `path` (required)
+
+The full path to the folder which this share will make accessible.
+
+#### `deny` (optional)
+
+A list of users which are not allowed to access this shared folder.
 
 ## Support
 

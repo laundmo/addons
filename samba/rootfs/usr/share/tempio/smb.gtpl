@@ -1,7 +1,8 @@
+#test
 [global]
    netbios name = {{ env "HOSTNAME" }}
    workgroup = {{ .workgroup }}
-   server string = Samba Home Assistant
+   server string = Samba Folder Home Assistant
 
    security = user
    ntlm auth = yes
@@ -17,88 +18,34 @@
    interfaces = 127.0.0.1 {{ .interfaces | join " " }}
    hosts allow = 127.0.0.1 {{ .allow_hosts | join " " }}
 
-   {{ if .compatibility_mode }}
+   {{- if .compatibility_mode -}}
    client min protocol = NT1
    server min protocol = NT1
-   {{ end }}
+   {{- end -}}
 
    mangled names = no
    dos charset = CP850
    unix charset = UTF-8
 
-[config]
+{{ $global := . -}}
+{{ range $share_env := .shares -}}
+   {{/* build a allowed users list which includes those not denied */}}
+   {{ $allowedUsers := list -}}
+   {{ range $users_env := $global.users -}}
+      {{ if not (has $users_env.username $share_env.deny) -}}
+      {{ $allowedUsers = append $allowedUsers $users_env.username -}}
+      {{ end -}}
+   {{ end -}}
+
+[{{$share_env.share_name}}]
    browseable = yes
    writeable = yes
-   path = /homeassistant
+   path = {{$share_env.path}}
 
-   valid users = {{ .username }}
+   valid users = {{ $allowedUsers | join " " }}
    force user = root
    force group = root
-   veto files = /{{ .veto_files | join "/" }}/
-   delete veto files = {{ eq (len .veto_files) 0 | ternary "no" "yes" }}
+   veto files = /{{ $global.veto_files | join "/" }}/
+   delete veto files = {{ eq (len $global.veto_files) 0 | ternary "no" "yes" }}
 
-[addons]
-   browseable = yes
-   writeable = yes
-   path = /addons
-
-   valid users = {{ .username }}
-   force user = root
-   force group = root
-   veto files = /{{ .veto_files | join "/" }}/
-   delete veto files = {{ eq (len .veto_files) 0 | ternary "no" "yes" }}
-
-[addon_configs]
-   browseable = yes
-   writeable = yes
-   path = /addon_configs
-
-   valid users = {{ .username }}
-   force user = root
-   force group = root
-   veto files = /{{ .veto_files | join "/" }}/
-   delete veto files = {{ eq (len .veto_files) 0 | ternary "no" "yes" }}
-
-[ssl]
-   browseable = yes
-   writeable = yes
-   path = /ssl
-
-   valid users = {{ .username }}
-   force user = root
-   force group = root
-   veto files = /{{ .veto_files | join "/" }}/
-   delete veto files = {{ eq (len .veto_files) 0 | ternary "no" "yes" }}
-
-[share]
-   browseable = yes
-   writeable = yes
-   path = /share
-
-   valid users = {{ .username }}
-   force user = root
-   force group = root
-   veto files = /{{ .veto_files | join "/" }}/
-   delete veto files = {{ eq (len .veto_files) 0 | ternary "no" "yes" }}
-
-[backup]
-   browseable = yes
-   writeable = yes
-   path = /backup
-
-   valid users = {{ .username }}
-   force user = root
-   force group = root
-   veto files = /{{ .veto_files | join "/" }}/
-   delete veto files = {{ eq (len .veto_files) 0 | ternary "no" "yes" }}
-
-[media]
-   browseable = yes
-   writeable = yes
-   path = /media
-
-   valid users = {{ .username }}
-   force user = root
-   force group = root
-   veto files = /{{ .veto_files | join "/" }}/
-   delete veto files = {{ eq (len .veto_files) 0 | ternary "no" "yes" }}
+{{ end -}}
